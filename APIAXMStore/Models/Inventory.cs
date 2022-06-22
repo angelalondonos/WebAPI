@@ -80,52 +80,57 @@ namespace APIAXMStore.Models
         public static List<Respuesta> Validar(List<Inventory> list_inventory)
         {
             List<Respuesta> oListInventory = new List<Respuesta>();
-            int acumulador = list_inventory[0].quantity;
 
-            using (SqlConnection oConexion = new SqlConnection(Conexion.rutaConexion))
+            foreach(Inventory inventory in list_inventory)
             {
+                int acumulador = inventory.quantity;
 
-                string query = "SELECT * FROM INVENTORY WHERE product_id = " + list_inventory[0].product_id + " Order by date_create";
-                SqlCommand cmd = new SqlCommand(query, oConexion);
-                cmd.CommandType = CommandType.Text;
-
-                try
+                using (SqlConnection oConexion = new SqlConnection(Conexion.rutaConexion))
                 {
-                    oConexion.Open();
-                    cmd.ExecuteNonQuery();
 
+                    string query = "SELECT * FROM INVENTORY WHERE product_id = " + inventory.product_id + " Order by date_create";
+                    SqlCommand cmd = new SqlCommand(query, oConexion);
+                    cmd.CommandType = CommandType.Text;
 
-                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    try
                     {
+                        oConexion.Open();
+                        cmd.ExecuteNonQuery();
 
-                        while (dr.Read())
+
+                        using (SqlDataReader dr = cmd.ExecuteReader())
                         {
-                            int cantidadDB = Convert.ToInt32(dr["quantity"]);
-                            if (acumulador > 0 && cantidadDB > 0)
+
+                            while (dr.Read())
                             {
-                                oListInventory.Add(new Respuesta()
+                                int cantidadDB = Convert.ToInt32(dr["quantity"]);
+                                if (acumulador > 0 && cantidadDB > 0)
                                 {
-                                    product_id = Convert.ToInt32(dr["product_id"]),
-                                    store_id = Convert.ToInt32(dr["store_id"]),
-                                    quantity = Convert.ToInt32(dr["quantity"]),
-                                    date_create = Convert.ToDateTime(dr["date_create"].ToString())
+                                    oListInventory.Add(new Respuesta()
+                                    {
+                                        product_id = Convert.ToInt32(dr["product_id"]),
+                                        store_id = Convert.ToInt32(dr["store_id"]),
+                                        quantity = Convert.ToInt32(dr["quantity"]),
+                                        date_create = Convert.ToDateTime(dr["date_create"].ToString())
 
 
-                                });
-                                acumulador = acumulador - cantidadDB;
+                                    });
+                                    acumulador = acumulador - cantidadDB;
+
+                                }
 
                             }
-                            
-                        }
 
+                        }
                     }
-                    return oListInventory;
+                    catch (Exception ex)
+                    {
+                        return oListInventory;
+                    }
                 }
-                catch (Exception ex)
-                {
-                    return oListInventory;
-                }
+
             }
+            return oListInventory;
 
         }
 
