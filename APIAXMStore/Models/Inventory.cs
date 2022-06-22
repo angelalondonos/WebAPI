@@ -80,10 +80,12 @@ namespace APIAXMStore.Models
         public static List<Respuesta> Validar(List<Inventory> list_inventory)
         {
             List<Respuesta> oListInventory = new List<Respuesta>();
+            int acumulador = list_inventory[0].quantity;
+
             using (SqlConnection oConexion = new SqlConnection(Conexion.rutaConexion))
             {
 
-                string query = "SELECT * FROM INVENTORY WHERE product_id = " + list_inventory[0].product_id;
+                string query = "SELECT * FROM INVENTORY WHERE product_id = " + list_inventory[0].product_id + " Order by date_create";
                 SqlCommand cmd = new SqlCommand(query, oConexion);
                 cmd.CommandType = CommandType.Text;
 
@@ -98,14 +100,22 @@ namespace APIAXMStore.Models
 
                         while (dr.Read())
                         {
-                            oListInventory.Add(new Respuesta()
+                            int cantidadDB = Convert.ToInt32(dr["quantity"]);
+                            if (acumulador > 0 && cantidadDB > 0)
                             {
-                                //inventory_id = Convert.ToInt32(dr["inventory_id"]),
-                                product_id = Convert.ToInt32(dr["product_id"]),
-                                store_id = Convert.ToInt32(dr["store_id"]),
-                                quantity = Convert.ToInt32(dr["quantity"]),
-                               // date_create = Convert.ToDateTime(dr["date_create"].ToString())
-                            });
+                                oListInventory.Add(new Respuesta()
+                                {
+                                    product_id = Convert.ToInt32(dr["product_id"]),
+                                    store_id = Convert.ToInt32(dr["store_id"]),
+                                    quantity = Convert.ToInt32(dr["quantity"]),
+                                    date_create = Convert.ToDateTime(dr["date_create"].ToString())
+
+
+                                });
+                                acumulador = acumulador - cantidadDB;
+
+                            }
+                            
                         }
 
                     }
@@ -126,5 +136,7 @@ namespace APIAXMStore.Models
         public int product_id { get; set; }
         public int store_id { get; set; }
         public int quantity { get; set; }
+        public DateTime date_create { get; set; }
+
     }
 }
